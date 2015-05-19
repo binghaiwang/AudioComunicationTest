@@ -97,7 +97,7 @@ public class AudioTrackRunnable implements Runnable {
 	}
 
 	public void toWait() {
-		synchronized (this) {
+		synchronized (AudioTrackRunnable.class) {
 			try {
 				wait();
 			} catch (InterruptedException e) {

@@ -45,8 +45,7 @@ public class AudioRecorderRunnable implements Runnable {
 		while (isRecording) {
 			mAudioRecord.read(buff, 0, buff.length);
 			bytes_pkg = buff.clone();
-			// Log.i(TAG,
-			// "byte.length -------> "+bytes_pkg[bytes_pkg.length-1]);
+			// Log.i(TAG,"byte.length -------> "+bytes_pkg[bytes_pkg.length-1]);
 
 			/**************************** 编码 PCM--->AAC ****************************/
 			int inputBufferIndex = coder.encoder.dequeueInputBuffer(-1);
@@ -76,7 +75,7 @@ public class AudioRecorderRunnable implements Runnable {
 			}
 			/***********************************************************************/
 
-			synchronized (pr) {
+			synchronized (AudioTrackRunnable.class) {
 				pr.notify();
 			}
 		}
