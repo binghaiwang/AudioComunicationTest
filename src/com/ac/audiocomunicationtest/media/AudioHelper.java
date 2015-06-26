@@ -23,6 +23,7 @@ public class AudioHelper {
     private final AudioTrackRunnable mTrack;
     private EncoderOrDecoder mCoder;
     private AudioHelper(){
+        System.out.print("init");
         boolean isInitRd = initAudioRecord();
         boolean isInitAt = initAudioTrack();
         isInitComplete = isInitAt && isInitRd;
