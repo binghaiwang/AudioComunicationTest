@@ -12,61 +12,61 @@ import java.nio.ByteBuffer;
 
 public class AudioTrackRunnable implements Runnable {
 
-	public final static String TAG = "PlayAudioRunnable";
+	public final static String TAG = "AudioTrackRunnable";
 	ByteBuffer inputBuffer;
 	ByteBuffer outputBuffer;
 	MediaCodec.BufferInfo bufferInfo;
 	byte[] outData;
-	EncoderOrDecoder coder;
-	AudioTrack mAudioTrack;
-	MediaDataQueue<byte[]> queue;
+	private EncoderOrDecoder mCoder;
+	private AudioTrack mAudioTrack;
+	private MediaDataQueue<byte[]> mQueue;
 	boolean isPlaying;
 	boolean isFistdecode;
 
 	public AudioTrackRunnable(EncoderOrDecoder coder, AudioTrack at,
 			MediaDataQueue<byte[]> queue) {
 		this.mAudioTrack = at;
-		this.queue = queue;
-		this.coder = coder;
+		this.mQueue = queue;
+		this.mCoder = coder;
 	}
 
 	@SuppressLint("NewApi")
 	@Override
 	public void run() {
-		coder.initDecoder();
-		coder.startDecoder();
+		mCoder.initDecoder();
+		mCoder.startDecoder();
 		mAudioTrack.play();
 		isPlaying = true;
 		while (isPlaying) {
-			if (queue.peek() == null) {
+			if (mQueue.peek() == null) {
 				toWait();
 			}
 			try {
-				if (queue.peek() != null) {
-					// int sizeInBytes = queue.peek().length;
-					byte[] bytes_pkg = queue.poll();
+				if (mQueue.peek() != null) {
+					// int sizeInBytes = mQueue.peek().length;
+					byte[] bytes_pkg = mQueue.poll();
 					/**************************** 编码 AAC--->PCM ****************************/
-					int inputBufferIndex = coder.decoder.dequeueInputBuffer(-1);
+					int inputBufferIndex = mCoder.decoder.dequeueInputBuffer(-1);
 					if (inputBufferIndex >= 0) {
-						inputBuffer = coder.decoder
+						inputBuffer = mCoder.decoder
 								.getInputBuffer(inputBufferIndex);
 						inputBuffer.clear();
 						inputBuffer.put(bytes_pkg);
 						if (isFistdecode) {
 							isFistdecode = false;
-							coder.decoder.queueInputBuffer(inputBufferIndex, 0,
+							mCoder.decoder.queueInputBuffer(inputBufferIndex, 0,
 									bytes_pkg.length, 0,
 									MediaCodec.BUFFER_FLAG_CODEC_CONFIG);
 						} else {
-							coder.decoder.queueInputBuffer(inputBufferIndex, 0,
+							mCoder.decoder.queueInputBuffer(inputBufferIndex, 0,
 									bytes_pkg.length, 0, 0);
 						}
 					}
 					bufferInfo = new MediaCodec.BufferInfo();
-					int outputBufferIndex = coder.decoder.dequeueOutputBuffer(
+					int outputBufferIndex = mCoder.decoder.dequeueOutputBuffer(
 							bufferInfo, 0);
 					while (outputBufferIndex >= 0) {
-						outputBuffer = coder.decoder
+						outputBuffer = mCoder.decoder
 								.getOutputBuffer(outputBufferIndex);
 						outputBuffer.position(bufferInfo.offset);
 						outputBuffer.limit(bufferInfo.offset + bufferInfo.size);
@@ -78,9 +78,9 @@ public class AudioTrackRunnable implements Runnable {
 						// 将编码完成的进行播放
 
 						outputBuffer.clear();
-						coder.decoder.releaseOutputBuffer(outputBufferIndex,
+						mCoder.decoder.releaseOutputBuffer(outputBufferIndex,
 								false);
-						outputBufferIndex = coder.decoder.dequeueOutputBuffer(
+						outputBufferIndex = mCoder.decoder.dequeueOutputBuffer(
 								bufferInfo, 0);
 					}
 					/***********************************************************************/
@@ -91,13 +91,13 @@ public class AudioTrackRunnable implements Runnable {
 			}
 		}
 		mAudioTrack.stop();
-		coder.stopDecoder();
-		if (queue != null && queue.size() > 0)
-			queue.clear();
+		mCoder.stopDecoder();
+		if (mQueue != null && mQueue.size() > 0)
+			mQueue.clear();
 	}
 
 	public void toWait() {
-		synchronized (AudioTrackRunnable.class) {
+		synchronized (this) {
 			try {
 				wait();
 			} catch (InterruptedException e) {

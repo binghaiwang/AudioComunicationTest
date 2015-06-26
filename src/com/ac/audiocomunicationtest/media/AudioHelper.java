@@ -14,21 +14,21 @@ public class AudioHelper {
 //	public static final int PLAY_MODE_SPEAKER	= 2;		// 喇叭播放模式
     public AudioRecord mAudioRecord;
     public AudioTrack mAudioTrack;
-    private int bufferSizeInBytes;
+    private int mBufferSizeInBytes;
     public final String TAG = "AudioHelper";
     private static AudioHelper instance;
     public boolean isInitComplete = false;
-    private MediaDataQueue<byte[]> queue = new MediaDataQueue<>();
-    private AudioRecorderRunnable recorder;
-    private AudioTrackRunnable track;
-    private EncoderOrDecoder coder;
+    private MediaDataQueue<byte[]> mQueue = new MediaDataQueue<>();
+    private AudioRecorderRunnable mRecorder;
+    private final AudioTrackRunnable mTrack;
+    private EncoderOrDecoder mCoder;
     private AudioHelper(){
         boolean isInitRd = initAudioRecord();
         boolean isInitAt = initAudioTrack();
         isInitComplete = isInitAt && isInitRd;
-        coder = new EncoderOrDecoder();
-        track = new AudioTrackRunnable(coder,mAudioTrack,queue);
-        recorder = new AudioRecorderRunnable(coder,mAudioRecord,track,queue);
+        mCoder = new EncoderOrDecoder();
+        mTrack = new AudioTrackRunnable(mCoder,mAudioTrack, mQueue);
+        mRecorder = new AudioRecorderRunnable(mCoder,mAudioRecord, mTrack, mQueue);
     }
 
     public static AudioHelper getInstance(){
@@ -43,9 +43,9 @@ public class AudioHelper {
     }
 
     public boolean initAudioRecord(){
-        bufferSizeInBytes = AudioRecord.getMinBufferSize(Const.SAMPLE_RATE_IN_HZ, Const.AUDIO_RECORD_CHANNEL_CONFIG, Const.AUDIO_FORMAT);
-        mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, Const.SAMPLE_RATE_IN_HZ, Const.AUDIO_RECORD_CHANNEL_CONFIG, Const.AUDIO_FORMAT, bufferSizeInBytes);
-        Log.i(TAG, "bufferSizeInBytes----> " + bufferSizeInBytes);
+        mBufferSizeInBytes = AudioRecord.getMinBufferSize(Const.SAMPLE_RATE_IN_HZ, Const.AUDIO_RECORD_CHANNEL_CONFIG, Const.AUDIO_FORMAT);
+        mAudioRecord = new AudioRecord(MediaRecorder.AudioSource.MIC, Const.SAMPLE_RATE_IN_HZ, Const.AUDIO_RECORD_CHANNEL_CONFIG, Const.AUDIO_FORMAT, mBufferSizeInBytes);
+        Log.i(TAG, "mBufferSizeInBytes----> " + mBufferSizeInBytes);
         return mAudioRecord.getState()==AudioRecord.STATE_INITIALIZED;
     }
 
@@ -60,15 +60,15 @@ public class AudioHelper {
     }
 
     public void start(){
-        new Thread(recorder).start();
-        new Thread(track).start();
+        new Thread(mRecorder).start();
+        new Thread(mTrack).start();
     }
 
     public void stop(){
-        track.stop();
-        recorder.stop();
-        synchronized (AudioTrackRunnable.class) {
-            track.notify();
+        mTrack.stop();
+        mRecorder.stop();
+        synchronized (mTrack) {
+            mTrack.notify();
         }
     }
 }

@@ -16,13 +16,14 @@ public class MainActivity extends Activity {
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.activity_main);
+		AudioHelper.getInstance();
 		Button btn_rd = (Button) findViewById(R.id.btn_record);
 		btn_rd.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-			if(AudioHelper.getInstance().isInitComplete){
-				AudioHelper.getInstance().start();
-			}
+				if(AudioHelper.getInstance().isInitComplete){
+					AudioHelper.getInstance().start();
+				}
 			}
 		});
 
@@ -30,7 +31,7 @@ public class MainActivity extends Activity {
 		btn_sr.setOnClickListener(new OnClickListener() {
 			@Override
 			public void onClick(View v) {
-			AudioHelper.getInstance().stop();
+				AudioHelper.getInstance().stop();
 			}
 		});
 
